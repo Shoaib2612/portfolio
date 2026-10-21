@@ -1,26 +1,294 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f3f0e8;
+  --ink: #0f0f10;
+  --muted: #6b6a66;
+  --rule: rgb(15 15 16 / 0.15);
+  --accent: #0b6b4f;
+  --on-accent: #ffffff;
+  /* Sticky header height; anchored sections offset by it. */
+  --header-h: 4rem;
+  /* How far the hero's accent block sits down and right of the photo. */
+  --frame-offset: clamp(16px, 2vw, 24px);
+
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* No-JS fallback: follow the system preference unless light is forced. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --paper: #0e0e10;
+    --ink: #f3f0e8;
+    --muted: #9a9893;
+    --rule: rgb(243 240 232 / 0.15);
+    --accent: #4ade9e;
+    --on-accent: #0e0e10;
+    
+    color-scheme: dark;
   }
 }
 
+:root[data-theme="dark"] {
+  --paper: #0e0e10;
+  --ink: #f3f0e8;
+  --muted: #9a9893;
+  --rule: rgb(243 240 232 / 0.15);
+  --accent: #4ade9e;
+  --on-accent: #0e0e10;
+  
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html {
+  scroll-padding-top: 4.5rem;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+@layer components {
+  /* Fluid page gutters: full width, no centered container. */
+  .page-x {
+    padding-inline: 1.25rem;
+    @media (width >= 48rem) {
+      padding-inline: 2.5rem;
+    }
+    @media (width >= 64rem) {
+      padding-inline: 4rem;
+    }
+    @media (width >= 96rem) {
+      padding-inline: 6rem;
+    }
+  }
+
+  /* Shared 1/4 + 3/4 editorial grid used by headings and ruled rows. */
+  .editorial-grid {
+    display: grid;
+    column-gap: 3rem;
+    @media (width >= 64rem) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+    }
+  }
+
+  /* Description text, shared site-wide. */
+  .text-body {
+    font-size: clamp(1.125rem, 0.95rem + 0.5vw, 1.4375rem);
+    line-height: 1.6;
+  }
+  /* Larger intro paragraphs (hero, contact). */
+  .text-lead {
+    font-size: clamp(1.25rem, 1rem + 0.9vw, 1.75rem);
+    line-height: 1.4;
+  }
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  /* Buttons: hover inverts with a short slide-fill. */
+  .btn {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    height: 3rem;
+    padding-inline: 1.4rem;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transition: color 0.25s ease;
+  }
+  .btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--ink);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.3s cubic-bezier(0.7, 0, 0.2, 1);
+  }
+  .btn:hover::before,
+  .btn:focus-visible::before {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .btn:hover,
+  .btn:focus-visible {
+    color: var(--paper);
+  }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  .btn-primary::before {
+    background: var(--paper);
+  }
+  .btn-primary:hover,
+  .btn-primary:focus-visible {
+    color: var(--accent);
+  }
+  .btn-heavy {
+    border-width: 2px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+  }
+
+  /* 3px accent underline that draws left to right; wraps with the text. */
+  .email-underline {
+    background: linear-gradient(var(--accent), var(--accent)) no-repeat left bottom / 0% 3px;
+    padding-bottom: 0.08em;
+    transition: background-size 0.4s cubic-bezier(0.7, 0, 0.2, 1);
+  }
+  a:hover > .email-underline,
+  a:focus-visible > .email-underline {
+    background-size: 100% 3px;
+  }
+
+  /*
+   * Soft fade on the ticker's left and right edges. Static paper-colored
+   * overlays rather than mask-image: a mask over a moving track forces a
+   * repaint every frame, which measurably hurt Total Blocking Time.
+   */
+  .edge-fade {
+    position: relative;
+  }
+  .edge-fade::before,
+  .edge-fade::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    z-index: 1;
+    width: 8%;
+    pointer-events: none;
+  }
+  .edge-fade::before {
+    left: 0;
+    background: linear-gradient(to right, var(--paper), transparent);
+  }
+  .edge-fade::after {
+    right: 0;
+    background: linear-gradient(to left, var(--paper), transparent);
+  }
+}
+
+/* ---------- Motion ---------- */
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Opacity starts at 0.01, not 0, so the hero image still counts for LCP. */
+@keyframes hero-shape-in {
+  from {
+    opacity: 0.01;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes hero-figure-in {
+  from {
+    opacity: 0.01;
+    transform: translateY(12px);
+  }
+}
+
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.marquee-track {
+  animation: marquee 70s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  .hero-shape {
+    transform-origin: 50% 100%;
+    animation: hero-shape-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .hero-figure {
+    animation: hero-figure-in 0.7s 0.15s ease-out both;
+  }
+
+  /* Scroll-driven reveal; CSS only, so no JS is shipped for it. */
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 45%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+  .btn,
+  .btn::before,
+  .email-underline {
+    transition: none;
+  }
 }
